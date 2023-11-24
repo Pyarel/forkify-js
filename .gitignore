@@ -1,1 +1,16 @@
-node_modules
+# Ignore node_modules and parcel cache directory
+node_modules/
+.parcel-cache/
+
+# Ignore build artifacts
+dist/
+out/
+*.log
+
+# Ignore environment-specific files
+.env
+.env.local
+.env.*.local
+
+# Ignore npm debug log
+npm-debug.log
