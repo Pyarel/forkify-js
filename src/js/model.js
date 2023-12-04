@@ -1,20 +1,21 @@
+import { async } from 'regenerator-runtime';
+import { API_URL, RES_PER_PAGE } from './config.js';
+import { getJSON } from './helpers.js';
+
 export const state = {
   recipe: {},
+  search: {
+    query: '',
+    results: [],
+    page: 1,
+    resultsPerPage: RES_PER_PAGE,
+  },
 };
 
 export const loadRecipe = async function (id) {
   try {
     // Loading Recipe
-    const res = await fetch(
-      `https://forkify-api.herokuapp.com/api/v2/recipes/${id}`
-      // 'https://forkify-api.herokuapp.com/api/v2/recipes/5ed6604691c37cdc054bd034'
-    );
-
-    const data = await res.json();
-
-    // Guard clause - if response status is failed
-    if (!res.ok) throw new Error(`${data.message} (${res.status})`);
-    // console.log(data);
+    const data = await getJSON(`${API_URL}${id}`);
 
     //Extract the recipe data
     let { recipe } = data.data;
@@ -28,7 +29,43 @@ export const loadRecipe = async function (id) {
       cookingTime: recipe.cooking_time,
       ingredients: recipe.ingredients,
     };
+    return state.recipe;
   } catch (err) {
     console.error(err);
   }
+};
+
+export const loadSearchResults = async function (query) {
+  try {
+    state.search.query = query;
+    const data = await getJSON(`${API_URL}?search=${query}`);
+    state.search.results = data.data.recipes.map(rec => {
+      return {
+        id: rec.id,
+        title: rec.title,
+        publisher: rec.publisher,
+        image: rec.image_url,
+      };
+    });
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const getSearchResultsPage = function (page = state.search.page) {
+  state.search.page = page;
+
+  const start = (page - 1) * RES_PER_PAGE; //0
+  const end = page * RES_PER_PAGE; //9
+
+  return state.search.results.slice(start, end);
+};
+
+export const updateServings = function (newServings) {
+  state.recipe.ingredients.forEach(ing => {
+    ing.quantity = (ing.quantity * newServings) / state.recipe.servings;
+    //newQt = oldQt * newServings / oldServings // 2 * 8 / 4 = 4
+  });
+  state.recipe.servings = newServings;
 };
